@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from app.middlewares.admin import get_admin_user
 from app.middlewares.auth import get_current_user
 from app.schemas.user_schema import UpdateUserSchema
 from app.config.db import db
@@ -38,3 +39,13 @@ def update_me(
             "name": updated_user.get("name") # type: ignore
         }
     }
+    
+@router.get("/all-users")
+def get_all_users(admin=Depends(get_admin_user)):
+
+    users = list(db["users"].find())
+
+    for user in users:
+        user["_id"] = str(user["_id"])
+
+    return users     

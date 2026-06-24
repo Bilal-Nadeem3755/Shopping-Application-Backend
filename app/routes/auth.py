@@ -22,7 +22,7 @@ from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-users_collection = db["user"]
+users_collection = db["users"]
 
 # ---------------- SIGNUP ----------------
 @router.post("/signup")
@@ -32,7 +32,7 @@ def signup(user: SignupSchema):
 
 
 # ---------------- LOGIN ----------------
-# ---------------- LOGIN ----------------
+
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
@@ -42,15 +42,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     )
 
     if not db_user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Invalid Username or Password")
 
     # Create tokens with verified status
     access_token = create_access_token({
-        "sub": db_user["email"],
-        "user_id": str(db_user["_id"]),
-        "verified": db_user.get("verified", False),  # <-- add this line
-        "role": db_user.get("role", "user")          # optional: include role
-    })
+    "sub": db_user["email"],
+    "user_id": str(db_user["_id"]),
+    "is_verified": db_user.get("is_verified", False),  #  FIX
+    "role": db_user.get("role", "user")
+})
 
     refresh_token = create_refresh_token({
         "sub": db_user["email"]
@@ -102,11 +102,11 @@ def refresh_token_route(refresh_token: str = Body(..., embed=True)):
     if not user or user.get("refresh_token") != refresh_token:
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
-    # ✅ ALSO ADD ROLE HERE
+    #  ALSO ADD ROLE HERE
     new_access_token = create_access_token({
         "sub": email,
         "user_id": str(user["_id"]),
-        "role": user.get("role", "user")   # 🔥 IMPORTANT
+        "role": user.get("role", "user")   #  IMPORTANT
     })
 
     return {"access_token": new_access_token}
@@ -122,3 +122,7 @@ def logout(current_user: dict = Depends(get_current_user)):
     )
 
     return {"message": "Logged out successfully"}
+
+@router.get("/verify-email/{token}")
+def verify_email_route(token: str):
+    return verify_email(token)

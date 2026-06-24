@@ -11,7 +11,7 @@ class CreateCouponSchema(BaseModel):
     expiry_date: Optional[datetime] = None
 
 # =========================
-# 🎟️ VALIDATE COUPON
+#  VALIDATE COUPON
 # =========================
 class ValidateCouponSchema(BaseModel):
     code: str

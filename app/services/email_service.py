@@ -5,11 +5,11 @@ from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
 
-# ✅ Mailtrap SMTP Settings
+#  Mailtrap SMTP Settings
 SMTP_SERVER = "sandbox.smtp.mailtrap.io"
 SMTP_PORT = 2525
 
-# ✅ Mailtrap Credentials (jo tum ne diye)
+#  Mailtrap Credentials (jo tum ne diye)
 EMAIL_ADDRESS = "048ac875395b7f"
 EMAIL_PASSWORD = "2efaf02675faff"
 
@@ -28,7 +28,7 @@ def send_email(to_email: str, subject: str, body: str) -> None:
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             server.sendmail(msg["From"], to_email, msg.as_string())
 
-        logger.info("✅ Email sent successfully")
+        logger.info(" Email sent successfully")
 
     except Exception as e:
-        logger.error(f"❌ Email failed: {str(e)}")
+        logger.error(f" Email failed: {str(e)}")

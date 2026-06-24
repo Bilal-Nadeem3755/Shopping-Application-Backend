@@ -159,7 +159,7 @@ def checkout(
         return {
             "message": "Order placed successfully",
             "order_id": order_id,
-            "status": "placed",
+            "status": "delivered",
             "original_total": original_total,
             "discount_amount": float(discount_amount),
             "final_total": float(total_amount)

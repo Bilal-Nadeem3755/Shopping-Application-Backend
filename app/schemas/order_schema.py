@@ -24,3 +24,4 @@ class CreateOrderSchema(BaseModel):
     address: AddressSchema
     items: List[OrderItemSchema]
     coupon_code: Optional[str] = None
+    payment_method: str

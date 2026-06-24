@@ -7,8 +7,11 @@ class ProductCreateSchema(BaseModel):
     description: Optional[str] = None
     price: float
     stock: int
-    
 
+    # NEW
+    image: Optional[str] = None
+    average_rating: Optional[float] = 0
+    review_count: Optional[int] = 0
 
 
 class ProductUpdateSchema(BaseModel):
@@ -16,3 +19,8 @@ class ProductUpdateSchema(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     stock: Optional[int] = None
+
+    # NEW
+    image: Optional[str] = None
+    average_rating: Optional[float] = None
+    review_count: Optional[int] = None

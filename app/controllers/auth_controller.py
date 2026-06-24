@@ -10,13 +10,13 @@ ph = PasswordHasher()
 users = db["users"]
 
 
-# ✅ CREATE USER
+#  CREATE USER
 def create_user(user_data: dict):
 
-    # 🔐 hash password
+    #  hash password
     user_data["password"] = ph.hash(user_data["password"])
 
-    # 🔐 generate verification token
+    #  generate verification token
     verification_token = secrets.token_urlsafe(32)
     verification_token_expiry = datetime.utcnow() + timedelta(minutes=15)
 
@@ -26,10 +26,10 @@ def create_user(user_data: dict):
 
     users.insert_one(user_data)
 
-    # 🔗 verification link
+    #  verification link
     verification_link = f"http://localhost:8000/auth/verify-email/{verification_token}"
 
-    # 📧 send verification email
+    #  send verification email
     send_email(
         to_email=user_data["email"],
         subject="Verify Your Email",
@@ -49,7 +49,7 @@ If you did not sign up, ignore this email.
     return {"message": "User created. Verification email sent."}
 
 
-# ✅ VERIFY EMAIL
+#  VERIFY EMAIL
 def verify_email(token: str):
 
     user = users.find_one({"verification_token": token})
@@ -62,7 +62,7 @@ def verify_email(token: str):
     if not expiry:
         raise HTTPException(status_code=400, detail="Token expiry missing")
 
-    # 🛑 Force datetime comparison
+    #  Force datetime comparison
     if datetime.utcnow() > expiry:
         raise HTTPException(status_code=400, detail="Verification token expired")
 
@@ -79,7 +79,7 @@ def verify_email(token: str):
 
     return {"message": "Email verified successfully"}
 
-# ✅ AUTHENTICATE USER
+#  AUTHENTICATE USER
 def authenticate_user(email: str, password: str):
 
     user = users.find_one({"email": email})
@@ -101,7 +101,7 @@ def authenticate_user(email: str, password: str):
     return user
 
 
-# ✅ UPDATE USER
+#  UPDATE USER
 def update_user(user_id: str, data: dict):
 
     users.update_one(
@@ -115,7 +115,7 @@ def update_user(user_id: str, data: dict):
     )
 
 
-# ✅ FORGOT PASSWORD
+#  FORGOT PASSWORD
 def forgot_password(email: str):
 
     user = users.find_one({"email": email})
@@ -136,8 +136,7 @@ def forgot_password(email: str):
         }
     )
 
-    reset_link = f"http://localhost:8000/auth/reset-password/{reset_token}"
-
+    reset_link = f"http://localhost:5173/reset-password/{reset_token}"
     send_email(
         to_email=email,
         subject="Reset Your Password",
@@ -157,7 +156,7 @@ If you did not request this, ignore this email.
     return {"message": "Password reset email sent"}
 
 
-# ✅ RESET PASSWORD
+#  RESET PASSWORD
 def reset_password(token: str, new_password: str):
 
     user = users.find_one({"reset_token": token})
@@ -165,7 +164,7 @@ def reset_password(token: str, new_password: str):
     if not user:
         raise HTTPException(status_code=400, detail="Invalid token")
 
-    # ⏰ expiry check
+    #  expiry check
     if user.get("reset_token_expiry") < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Reset token expired")
 
@@ -184,7 +183,7 @@ def reset_password(token: str, new_password: str):
 
     return {"message": "Password reset successfully"}
 
-# ✅ RESEND VERIFICATION EMAIL
+#  RESEND VERIFICATION EMAIL
 
 def resend_verification(email: str):
 
@@ -196,7 +195,7 @@ def resend_verification(email: str):
     if user.get("is_verified"):
         raise HTTPException(status_code=400, detail="Email already verified")
 
-    # 🔐 generate new token
+    #  generate new token
     verification_token = secrets.token_urlsafe(32)
     verification_token_expiry = datetime.utcnow() + timedelta(minutes=15)
 
@@ -210,7 +209,7 @@ def resend_verification(email: str):
         }
     )
 
-    verification_link = f"http://localhost:8000/auth/verify-email/{verification_token}"
+    verification_link = f"http://localhost:5173/verify-email/{verification_token}"
 
     send_email(
         to_email=email,

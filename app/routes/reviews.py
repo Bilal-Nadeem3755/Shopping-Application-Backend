@@ -6,52 +6,48 @@ from app.config.db import db
 from app.middlewares.auth import get_current_user
 from app.middlewares.admin import get_admin_user
 
-router = APIRouter(
-    prefix="/reviews",
-    tags=["Reviews"]
-)
+router = APIRouter(prefix="/reviews", tags=["Reviews"])
+
 
 # ===============================
 # ADD REVIEW
 # ===============================
 @router.post("/")
-def add_review(
-    data: ReviewCreate,
-    current_user=Depends(get_current_user)
-):
+def add_review(data: ReviewCreate, current_user=Depends(get_current_user)):
 
     user_id = str(current_user["_id"])
     product_id = data.product_id
 
-    # ✅ Check product exists
+    #  Check product exists
     product = db["products"].find_one({"_id": ObjectId(product_id)})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # ✅ Check user purchased AND delivered
-    delivered_order = db["orders"].find_one({
-        "user_id": user_id,
-        "status": "delivered",
-        "items.product_id": product_id
-    })
+    #  Check user purchased AND delivered
+    print("USER:", user_id)
+    print("PRODUCT:", product_id)
+    delivered_order = db["orders"].find_one(
+        {
+            "user_id": ObjectId(user_id),
+            "status": "delivered",
+            "items.product_id": ObjectId(product_id),
+        }
+    )
+    print("ORDER FOUND:", delivered_order)
 
     if not delivered_order:
         raise HTTPException(
             status_code=403,
-            detail="You can only review delivered products you purchased"
+            detail="You can only review delivered products you purchased",
         )
 
-    # ✅ Prevent duplicate review
-    existing_review = db["reviews"].find_one({
-        "user_id": user_id,
-        "product_id": product_id
-    })
+    #  Prevent duplicate review
+    existing_review = db["reviews"].find_one(
+        {"user_id": user_id, "product_id": product_id}
+    )
 
     if existing_review:
-        raise HTTPException(
-            status_code=400,
-            detail="You already reviewed this product"
-        )
+        raise HTTPException(status_code=400, detail="You already reviewed this product")
 
     review = {
         "product_id": product_id,
@@ -59,14 +55,14 @@ def add_review(
         "rating": data.rating,
         "comment": data.comment,
         "status": "pending",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
     }
 
     db["reviews"].insert_one(review)
 
     return {
         "message": "Review submitted and waiting for admin approval",
-        "status": "pending"
+        "status": "pending",
     }
 
 
@@ -74,10 +70,7 @@ def add_review(
 # DELETE REVIEW (ADMIN)
 # ===============================
 @router.delete("/{review_id}")
-def delete_review(
-    review_id: str,
-    admin=Depends(get_admin_user)
-):
+def delete_review(review_id: str, admin=Depends(get_admin_user)):
 
     review = db["reviews"].find_one({"_id": ObjectId(review_id)})
 
@@ -97,10 +90,7 @@ def delete_review(
 # APPROVE REVIEW (ADMIN)
 # ===============================
 @router.put("/{review_id}/approve")
-def approve_review(
-    review_id: str,
-    admin=Depends(get_admin_user)
-):
+def approve_review(review_id: str, admin=Depends(get_admin_user)):
 
     review = db["reviews"].find_one({"_id": ObjectId(review_id)})
 
@@ -111,8 +101,7 @@ def approve_review(
         raise HTTPException(status_code=400, detail="Review already approved")
 
     db["reviews"].update_one(
-        {"_id": ObjectId(review_id)},
-        {"$set": {"status": "approved"}}
+        {"_id": ObjectId(review_id)}, {"$set": {"status": "approved"}}
     )
 
     update_product_rating(review["product_id"])
@@ -124,10 +113,7 @@ def approve_review(
 # REJECT REVIEW (ADMIN)
 # ===============================
 @router.put("/{review_id}/reject")
-def reject_review(
-    review_id: str,
-    admin=Depends(get_admin_user)
-):
+def reject_review(review_id: str, admin=Depends(get_admin_user)):
 
     review = db["reviews"].find_one({"_id": ObjectId(review_id)})
 
@@ -138,8 +124,7 @@ def reject_review(
         raise HTTPException(status_code=400, detail="Review already rejected")
 
     db["reviews"].update_one(
-        {"_id": ObjectId(review_id)},
-        {"$set": {"status": "rejected"}}
+        {"_id": ObjectId(review_id)}, {"$set": {"status": "rejected"}}
     )
 
     update_product_rating(review["product_id"])
@@ -151,9 +136,7 @@ def reject_review(
 # GET PENDING REVIEWS (ADMIN)
 # ===============================
 @router.get("/pending")
-def get_pending_reviews(
-    admin=Depends(get_admin_user)
-):
+def get_pending_reviews(admin=Depends(get_admin_user)):
 
     reviews = list(db["reviews"].find({"status": "pending"}))
 
@@ -168,9 +151,7 @@ def get_pending_reviews(
 # ===============================
 @router.put("/{review_id}")
 def edit_review(
-    review_id: str,
-    data: ReviewCreate,
-    current_user=Depends(get_current_user)
+    review_id: str, data: ReviewCreate, current_user=Depends(get_current_user)
 ):
 
     review = db["reviews"].find_one({"_id": ObjectId(review_id)})
@@ -182,10 +163,7 @@ def edit_review(
         raise HTTPException(status_code=403, detail="Not authorized")
 
     if review["status"] != "pending":
-        raise HTTPException(
-            status_code=400,
-            detail="Only pending review can be edited"
-        )
+        raise HTTPException(status_code=400, detail="Only pending review can be edited")
 
     db["reviews"].update_one(
         {"_id": ObjectId(review_id)},
@@ -193,14 +171,12 @@ def edit_review(
             "$set": {
                 "rating": data.rating,
                 "comment": data.comment,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.utcnow(),
             }
-        }
+        },
     )
 
-    return {
-        "message": "Review updated successfully (waiting for approval)"
-    }
+    return {"message": "Review updated successfully (waiting for approval)"}
 
 
 # ===============================
@@ -208,15 +184,12 @@ def edit_review(
 # ===============================
 def update_product_rating(product_id: str):
 
-    reviews = list(db["reviews"].find({
-        "product_id": product_id,
-        "status": "approved"
-    }))
+    reviews = list(db["reviews"].find({"product_id": product_id, "status": "approved"}))
 
     if not reviews:
         db["products"].update_one(
             {"_id": ObjectId(product_id)},
-            {"$set": {"average_rating": 0, "review_count": 0}}
+            {"$set": {"average_rating": 0, "review_count": 0}},
         )
         return
 
@@ -228,7 +201,7 @@ def update_product_rating(product_id: str):
         {
             "$set": {
                 "average_rating": round(avg_rating, 2),
-                "review_count": len(reviews)
+                "review_count": len(reviews),
             }
-        }
+        },
     )
