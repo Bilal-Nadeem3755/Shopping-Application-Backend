@@ -1,4 +1,3 @@
-
 import logging
 import os
 
@@ -91,7 +90,6 @@ def create_stripe_checkout(
 
         # Create Stripe Checkout Session
         session = stripe.checkout.Session.create(
-            payment_method_types=["card"], #type:ignore
             mode="payment",
             line_items=[
                 {
@@ -109,7 +107,6 @@ def create_stripe_checkout(
             cancel_url=cancel_url,
             metadata={"order_id": order_id},
         )
-
         logger.info(
             "Stripe checkout session created successfully for order %s",
             order_id,
@@ -120,7 +117,7 @@ def create_stripe_checkout(
     except HTTPException:
         raise
 
-    except stripe.error.StripeError: # type: ignore
+    except stripe.error.StripeError:  # type: ignore
         logger.exception("Stripe API error for order %s", order_id)
         raise HTTPException(
             status_code=502,
