@@ -17,7 +17,7 @@ EMAIL_PASSWORD = "2efaf02675faff"
 def send_email(to_email: str, subject: str, body: str) -> None:
 
     msg = MIMEMultipart()
-    msg["From"] = "ShoppingwithBilal@example.com"  # sender can be anything in testing
+    msg["From"] = "EasyBuy@example.com"  # sender can be anything in testing
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
