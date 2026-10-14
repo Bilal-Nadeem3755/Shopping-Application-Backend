@@ -91,7 +91,7 @@ def create_stripe_checkout(
 
         # Create Stripe Checkout Session
         session = stripe.checkout.Session.create(
-            payment_method_types=["card"], # type: ignore
+            payment_method_types=["card"], 
             mode="payment",
             line_items=[
                 {
